@@ -159,8 +159,8 @@ function makeMCQs() {
 
 function init() {
   // Every listener is registered only after the HTML is ready.
-  $("loginBtn")?.addEventListener("click", saveProfile);
-  $("profileBtn")?.addEventListener("click", openProfile);
+  document.addEventListener("click", e => {\n    const id = e.target.closest?.("button,[data-action]")?.id;\n    if (id === "loginBtn") saveProfile();\n    else if (id === "profileBtn") openProfile();\n    else if (id === "themeBtn") toggleTheme();\n    else if (id === "backBtn") goHome();\n    else if (id === "aiBtn") show($("modal"));\n    else if (id === "close") hide($("modal"));\n    else if (id === "profileClose") hide($("profileModal"));\n    else if (id === "editProfile") editProfile();\n    else if (id === "logoutBtn") logout();\n    else if (id === "mcqBtn") makeMCQs();\n    const subject = e.target.closest?.(".subject");\n    if (subject) openSubject(subject.dataset.subject);\n  });\n  $("loginBtn")?.addEventListener("click", e => { e.stopPropagation(); saveProfile(); });
+  $("profileBtn")?.addEventListener("click", e => { e.stopPropagation(); openProfile(); });
   $("profileClose")?.addEventListener("click", () => hide($("profileModal")));
   $("editProfile")?.addEventListener("click", editProfile);
   $("logoutBtn")?.addEventListener("click", logout);
