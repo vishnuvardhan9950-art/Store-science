@@ -1,3 +1,62 @@
+def show_login():
+    document.getElementById("loginScreen").classList.remove("hidden")
+    document.getElementById("site").classList.add("hidden")
+
+def show_site():
+    document.getElementById("loginScreen").classList.add("hidden")
+    document.getElementById("site").classList.remove("hidden")
+
+def avatar(gender):
+    face = "👩🏻‍🎓" if gender == "female" else "👨🏻‍🎓"
+    document.getElementById("avatarFace").textContent = face
+    document.getElementById("modalAvatar").textContent = face
+
+def save_profile(event=None):
+    import json
+    name = document.getElementById("loginName").value.strip()
+    age = document.getElementById("loginAge").value
+    gender = document.getElementById("loginGender").value
+    student_class = document.getElementById("loginClass").value
+    if not name or not age or not gender or not student_class:
+        window.alert("Please complete all profile details.")
+        return
+    profile = {"name": name, "age": age, "gender": gender, "studentClass": student_class}
+    window.localStorage.setItem("storeScienceProfile", json.dumps(profile))
+    document.getElementById("userName").textContent = "Hi, " + name
+    document.getElementById("welcomeText").textContent = "Welcome back, " + name + ". Keep learning and keep growing."
+    avatar(gender)
+    show_site()
+
+def open_profile(event=None):
+    import json
+    try:
+        p = json.loads(window.localStorage.getItem("storeScienceProfile") or "{}")
+    except Exception:
+        p = {}
+    document.getElementById("detailName").textContent = p.get("name", "—")
+    document.getElementById("detailAge").textContent = p.get("age", "—")
+    document.getElementById("detailGender").textContent = "Female" if p.get("gender") == "female" else "Male"
+    document.getElementById("detailClass").textContent = "Class " + p.get("studentClass", "11")
+    document.getElementById("modalName").textContent = p.get("name", "Student")
+    document.getElementById("modalClass").textContent = "Class " + p.get("studentClass", "11")
+    avatar(p.get("gender", "male"))
+    document.getElementById("profileModal").classList.remove("hidden")
+
+def edit_profile(event=None):
+    import json
+    p = json.loads(window.localStorage.getItem("storeScienceProfile") or "{}")
+    document.getElementById("loginName").value = p.get("name", "")
+    document.getElementById("loginAge").value = p.get("age", "")
+    document.getElementById("loginGender").value = p.get("gender", "")
+    document.getElementById("loginClass").value = p.get("studentClass", "")
+    document.getElementById("profileModal").classList.add("hidden")
+    show_login()
+
+def logout(event=None):
+    window.localStorage.removeItem("storeScienceProfile")
+    document.getElementById("profileModal").classList.add("hidden")
+    show_login()
+
 from pyscript import document, window
 
 SUBJECTS = [
@@ -69,6 +128,25 @@ def make_mcqs(event=None):
 
 def search(event=None):
     render(event.target.value)
+
+document.getElementById("loginBtn").addEventListener("click", save_profile)
+document.getElementById("profileBtn").addEventListener("click", open_profile)
+document.getElementById("profileClose").addEventListener("click", lambda event: document.getElementById("profileModal").classList.add("hidden"))
+document.getElementById("editProfile").addEventListener("click", edit_profile)
+document.getElementById("logoutBtn").addEventListener("click", logout)
+stored = window.localStorage.getItem("storeScienceProfile")
+if stored:
+    import json
+    try:
+        p = json.loads(stored)
+        document.getElementById("userName").textContent = "Hi, " + p.get("name", "")
+        document.getElementById("welcomeText").textContent = "Welcome back, " + p.get("name", "") + ". Keep learning and keep growing."
+        avatar(p.get("gender", "male"))
+        show_site()
+    except Exception:
+        show_login()
+else:
+    show_login()
 
 document.getElementById("themeBtn").addEventListener("click", toggle_theme)
 document.getElementById("search").addEventListener("input", search)
