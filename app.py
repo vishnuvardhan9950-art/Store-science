@@ -1,63 +1,82 @@
+from pyscript import document, window
+import json
+
+KEY = "storeScienceProfile"
+
+def get(id):
+    return document.getElementById(id)
+
+def set_visible(id, visible):
+    el = get(id)
+    if visible:
+        el.classList.remove("hidden")
+    else:
+        el.classList.add("hidden")
+
 def show_login():
-    document.getElementById("loginScreen").classList.remove("hidden")
-    document.getElementById("site").classList.add("hidden")
+    set_visible("loginScreen", True)
+    set_visible("site", False)
 
-def show_site():
-    document.getElementById("loginScreen").classList.add("hidden")
-    document.getElementById("site").classList.remove("hidden")
-
-def avatar(gender):
-    face = "👩🏻‍🎓" if gender == "female" else "👨🏻‍🎓"
-    document.getElementById("avatarFace").textContent = face
-    document.getElementById("modalAvatar").textContent = face
+def show_home():
+    set_visible("loginScreen", False)
+    set_visible("site", True)
+    set_visible("profileModal", False)
+    set_visible("subjectPage", False)
+    set_visible("homeSubjects", True)
+    document.querySelector(".tools").style.display = "block"
 
 def save_profile(event=None):
-    import json
-    name = document.getElementById("loginName").value.strip()
-    age = document.getElementById("loginAge").value
-    gender = document.getElementById("loginGender").value
-    student_class = document.getElementById("loginClass").value
+    name = get("loginName").value.strip()
+    age = get("loginAge").value
+    gender = get("loginGender").value
+    student_class = get("loginClass").value
     if not name or not age or not gender or not student_class:
         window.alert("Please complete all profile details.")
         return
     profile = {"name": name, "age": age, "gender": gender, "studentClass": student_class}
-    window.localStorage.setItem("storeScienceProfile", json.dumps(profile))
-    document.getElementById("userName").textContent = "Hi, " + name
-    document.getElementById("welcomeText").textContent = "Welcome back, " + name + ". Keep learning and keep growing."
-    avatar(gender)
-    show_site()
+    window.localStorage.setItem(KEY, json.dumps(profile))
+    get("userName").textContent = "Hi, " + name
+    get("welcomeText").textContent = "Welcome back, " + name + ". Keep learning and keep growing."
+    set_avatar(gender)
+    show_home()
+
+def set_avatar(gender):
+    face = "👩🏻‍🎓" if gender == "female" else "👨🏻‍🎓"
+    get("avatarFace").textContent = face
+    get("modalAvatar").textContent = face
 
 def open_profile(event=None):
-    import json
-    try:
-        p = json.loads(window.localStorage.getItem("storeScienceProfile") or "{}")
-    except Exception:
-        p = {}
-    document.getElementById("detailName").textContent = p.get("name", "—")
-    document.getElementById("detailAge").textContent = p.get("age", "—")
-    document.getElementById("detailGender").textContent = "Female" if p.get("gender") == "female" else "Male"
-    document.getElementById("detailClass").textContent = "Class " + p.get("studentClass", "11")
-    document.getElementById("modalName").textContent = p.get("name", "Student")
-    document.getElementById("modalClass").textContent = "Class " + p.get("studentClass", "11")
-    avatar(p.get("gender", "male"))
-    document.getElementById("profileModal").classList.remove("hidden")
+    raw = window.localStorage.getItem(KEY)
+    if not raw:
+        show_login()
+        return
+    p = json.loads(raw)
+    get("detailName").textContent = p.get("name", "—")
+    get("detailAge").textContent = p.get("age", "—")
+    get("detailGender").textContent = "Female" if p.get("gender") == "female" else "Male"
+    get("detailClass").textContent = "Class " + p.get("studentClass", "11")
+    get("modalName").textContent = p.get("name", "Student")
+    get("modalClass").textContent = "Class " + p.get("studentClass", "11")
+    set_avatar(p.get("gender", "male"))
+    set_visible("profileModal", True)
 
 def edit_profile(event=None):
-    import json
-    p = json.loads(window.localStorage.getItem("storeScienceProfile") or "{}")
-    document.getElementById("loginName").value = p.get("name", "")
-    document.getElementById("loginAge").value = p.get("age", "")
-    document.getElementById("loginGender").value = p.get("gender", "")
-    document.getElementById("loginClass").value = p.get("studentClass", "")
-    document.getElementById("profileModal").classList.add("hidden")
+    raw = window.localStorage.getItem(KEY)
+    if not raw:
+        show_login()
+        return
+    p = json.loads(raw)
+    get("loginName").value = p.get("name", "")
+    get("loginAge").value = p.get("age", "")
+    get("loginGender").value = p.get("gender", "")
+    get("loginClass").value = p.get("studentClass", "")
+    set_visible("profileModal", False)
     show_login()
 
 def logout(event=None):
-    window.localStorage.removeItem("storeScienceProfile")
-    document.getElementById("profileModal").classList.add("hidden")
+    window.localStorage.removeItem(KEY)
+    set_visible("profileModal", False)
     show_login()
-
-from pyscript import document, window
 
 SUBJECTS = [
     ("⚛️", "Physics", "Your Physics study files"),
@@ -67,94 +86,83 @@ SUBJECTS = [
     ("🧬", "Biology", "Your Biology study files"),
 ]
 
-def stats():
-    document.getElementById("fileTotal").textContent = "0"
-    document.getElementById("mcqTotal").textContent = "0"
-    document.getElementById("bestScore").textContent = "—"
-
-def open_subject(name):
-    document.getElementById("homeSubjects").style.display = "none"
-    document.querySelector(".tools").style.display = "none"
-    page = document.getElementById("subjectPage")
-    page.classList.remove("hidden")
-    page.style.display = "block"
-    document.getElementById("subjectName").textContent = name
-
 def render(query=""):
     query = query.lower().strip()
-    grid = document.getElementById("subjects")
+    grid = get("subjects")
     grid.innerHTML = ""
     matches = [s for s in SUBJECTS if query in " ".join(s).lower()]
     for icon, name, desc in matches:
         card = document.createElement("button")
-        card.className = "subject"
         card.type = "button"
+        card.className = "subject"
         card.innerHTML = f'<div class="emoji">{icon}</div><h4>{name}</h4><p>{desc}</p><div class="arrow">→</div>'
         card.addEventListener("click", lambda event, n=name: open_subject(n))
         grid.appendChild(card)
-    document.getElementById("count").textContent = f"{len(matches)} subject" + ("" if len(matches) == 1 else "s")
+    get("count").textContent = str(len(matches)) + " subject" + ("" if len(matches) == 1 else "s")
+
+def open_subject(name):
+    set_visible("homeSubjects", False)
+    document.querySelector(".tools").style.display = "none"
+    set_visible("subjectPage", True)
+    get("subjectName").textContent = name
 
 def go_home(event=None):
-    document.getElementById("subjectPage").classList.add("hidden")
-    document.getElementById("subjectPage").style.display = "none"
-    document.getElementById("homeSubjects").style.display = "block"
-    document.querySelector(".tools").style.display = "block"
+    show_home()
     render()
 
 def toggle_theme(event=None):
-    body = document.body
-    body.classList.toggle("dark")
-    document.getElementById("themeBtn").textContent = "☀" if body.classList.contains("dark") else "☾"
-
-def close_ai(event=None):
-    document.getElementById("modal").classList.add("hidden")
+    document.body.classList.toggle("dark")
+    get("themeBtn").textContent = "☀" if document.body.classList.contains("dark") else "☾"
 
 def open_ai(event=None):
-    document.getElementById("modal").classList.remove("hidden")
+    set_visible("modal", True)
+
+def close_ai(event=None):
+    set_visible("modal", False)
 
 def make_mcqs(event=None):
-    subject = document.getElementById("mcqSubject").value
+    subject = get("mcqSubject").value
     questions = {
         "Physics": ["Which law relates force, mass and acceleration?", "What is the SI unit of work?", "What does velocity measure?"],
-        "Chemistry": ["What is atomic number?", "Which particle has a negative charge?", "What is Avogadro’s constant?"],
+        "Chemistry": ["What is atomic number?", "Which particle has a negative charge?", "What is Avogadro's constant?"],
         "Mathematics": ["What is the domain of a function?", "What is sin²θ + cos²θ?", "What is a quadratic equation?"],
         "Computer Science": ["What does CPU stand for?", "What is an algorithm?", "What is a variable?"],
-        "Biology": ["What is the basic unit of life?", "Which organelle is called the powerhouse of the cell?", "What is photosynthesis?"],
+        "Biology": ["What is the basic unit of life?", "Which organelle is called the powerhouse of the cell?", "What is photosynthesis?"]
     }[subject]
-    output = document.getElementById("mcqOutput")
-    output.innerHTML = "<div class='answer'><b>Practice set — " + subject + "</b><ol>" + "".join(
-        f"<li>{questions[i % len(questions)]}</li>" for i in range(10)
-    ) + "</ol></div>"
+    items = "".join(f"<li>{questions[i % len(questions)]}</li>" for i in range(10))
+    get("mcqOutput").innerHTML = f"<div class='answer'><b>Practice set — {subject}</b><ol>{items}</ol></div>"
 
-def search(event=None):
-    render(event.target.value)
+def stats():
+    get("fileTotal").textContent = "0"
+    get("mcqTotal").textContent = "0"
+    get("bestScore").textContent = "—"
 
-document.getElementById("loginBtn").addEventListener("click", save_profile)
-document.getElementById("profileBtn").addEventListener("click", open_profile)
-document.getElementById("profileClose").addEventListener("click", lambda event: document.getElementById("profileModal").classList.add("hidden"))
-document.getElementById("editProfile").addEventListener("click", edit_profile)
-document.getElementById("logoutBtn").addEventListener("click", logout)
-stored = window.localStorage.getItem("storeScienceProfile")
+# Register every handler after the DOM exists.
+get("loginBtn").addEventListener("click", save_profile)
+get("profileBtn").addEventListener("click", open_profile)
+get("profileClose").addEventListener("click", lambda event: set_visible("profileModal", False))
+get("editProfile").addEventListener("click", edit_profile)
+get("logoutBtn").addEventListener("click", logout)
+get("themeBtn").addEventListener("click", toggle_theme)
+get("search").addEventListener("input", lambda event: render(event.target.value))
+get("backBtn").addEventListener("click", go_home)
+get("aiBtn").addEventListener("click", open_ai)
+get("close").addEventListener("click", close_ai)
+get("mcqBtn").addEventListener("click", make_mcqs)
+
+stored = window.localStorage.getItem(KEY)
 if stored:
-    import json
     try:
         p = json.loads(stored)
-        document.getElementById("userName").textContent = "Hi, " + p.get("name", "")
-        document.getElementById("welcomeText").textContent = "Welcome back, " + p.get("name", "") + ". Keep learning and keep growing."
-        avatar(p.get("gender", "male"))
-        show_site()
+        get("userName").textContent = "Hi, " + p.get("name", "")
+        get("welcomeText").textContent = "Welcome back, " + p.get("name", "") + ". Keep learning and keep growing."
+        set_avatar(p.get("gender", "male"))
+        show_home()
     except Exception:
+        window.localStorage.removeItem(KEY)
         show_login()
 else:
     show_login()
-
-document.getElementById("themeBtn").addEventListener("click", toggle_theme)
-document.getElementById("search").addEventListener("input", search)
-document.getElementById("backBtn").addEventListener("click", go_home)
-document.getElementById("aiBtn").addEventListener("click", open_ai)
-document.getElementById("close").addEventListener("click", close_ai)
-document.getElementById("modal").addEventListener("click", lambda event: close_ai() if event.target.id == "modal" else None)
-document.getElementById("mcqBtn").addEventListener("click", make_mcqs)
 
 render()
 stats()
