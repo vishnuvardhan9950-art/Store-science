@@ -1,6 +1,5 @@
 const subjects=[["⚛️","Physics","Your Physics study files"],["🧪","Chemistry","Your Chemistry study files"],["📐","Mathematics","Your Mathematics study files"],["💻","Computer Science","Your Computer Science study files"]];
 const grid=document.getElementById("subjects"),home=document.getElementById("homeSubjects"),page=document.getElementById("subjectPage");let currentSubject="";
-localStorage.clear();
 function showLogin(){document.getElementById("site").classList.add("hidden");document.getElementById("profileScreen").classList.remove("hidden");document.getElementById("profileName").focus()}
 function setProfile(p){localStorage.setItem("storeScienceProfile",JSON.stringify(p));document.getElementById("profileScreen").classList.add("hidden");document.getElementById("site").classList.remove("hidden");document.getElementById("welcomeText").textContent="Welcome back, "+p.name+". Keep learning and keep growing.";setAvatar(p.gender);updateStats()}
 function setAvatar(g){const face=g==="female"?"👩🏻‍🎓":"👨🏻‍🎓";document.getElementById("avatarFace").textContent=face;document.getElementById("modalAvatar").textContent=face}
