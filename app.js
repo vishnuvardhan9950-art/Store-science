@@ -48,11 +48,14 @@ async function saveFiles(files,subject){const db=await openDB();return Promise.a
 async function loadFiles(subject){const db=await openDB();return new Promise((resolve,reject)=>{const r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>resolve(r.result.filter(x=>x.subject===subject));r.onerror=()=>reject(r.error);});}
 async function deleteFile(id){const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,"readwrite");tx.objectStore(STORE).delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}
 async function renderFiles(subject){const list=$("fileList");if(!list)return;const files=await loadFiles(subject);if($("fileTotal"))$("fileTotal").textContent=files.length;list.innerHTML=files.length?files.map(f=>'<div class="file-item"><span>📄</span><div><b>'+f.name+'</b><small>'+Math.ceil(f.size/1024)+' KB</small></div><button type="button" data-view="'+f.id+'">View</button><button type="button" data-del="'+f.id+'">Delete</button></div>').join(""):'<p class="empty-files">📚 No files uploaded yet.</p>';list.querySelectorAll("[data-view]").forEach(b=>b.onclick=async()=>{const x=files.find(f=>f.id==b.dataset.view);const url=URL.createObjectURL(x.data);window.open(url,"_blank");setTimeout(()=>URL.revokeObjectURL(url),60000)});list.querySelectorAll("[data-del]").forEach(b=>b.onclick=async()=>{await deleteFile(Number(b.dataset.del));renderFiles(subject);});}
-\nfunction openSubject(name) {
+
+function openSubject(name) {
   hide($("homeSubjects"));
   if (document.querySelector(".tools")) document.querySelector(".tools").style.display = "none";
   show($("subjectPage"));
-  if ($("subjectName")) $("subjectName").textContent = name;\n  if ($("subjectHint")) $("subjectHint").textContent = "Upload and organize your "+name+" study material.";\n  renderFiles(name);
+  if ($("subjectName")) $("subjectName").textContent = name;
+  if ($("subjectHint")) $("subjectHint").textContent = "Upload and organize your "+name+" study material.";
+  renderFiles(name);
 }
 
 function goHome() {
@@ -166,7 +169,8 @@ function init() {
   $("backBtn")?.addEventListener("click", goHome);
   $("aiBtn")?.addEventListener("click", () => show($("modal")));
   $("close")?.addEventListener("click", () => hide($("modal")));
-  $("mcqBtn")?.addEventListener("click", makeMCQs);\n  $("fileUpload")?.addEventListener("change", async e=>{const subject=$("subjectName").textContent; if(e.target.files.length){await saveFiles(e.target.files,subject);$("uploadStatus").textContent=e.target.files.length+" file(s) saved";renderFiles(subject);e.target.value="";}});
+  $("mcqBtn")?.addEventListener("click", makeMCQs);
+  $("fileUpload")?.addEventListener("change", async e=>{const subject=$("subjectName").textContent; if(e.target.files.length){await saveFiles(e.target.files,subject);$("uploadStatus").textContent=e.target.files.length+" file(s) saved";renderFiles(subject);e.target.value="";}});
 
   $("profileModal")?.addEventListener("click", e => {
     if (e.target === $("profileModal")) hide($("profileModal"));
